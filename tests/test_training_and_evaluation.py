@@ -41,12 +41,15 @@ def test_training_and_evaluation():
 
     # Check if CUDA (GPU) is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}")
     model.to(device)
 
-    train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, device)
+    trained_model, losses = train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, device)
 
-    accuracy, macro_f1 = evaluate(model, train_set, device)  # Use train set also for evaluation for testing
-    print(accuracy)
-    print(macro_f1)
+    print(f"Losses: {losses}")
+
+    accuracy, macro_f1 = evaluate(trained_model, train_set, device)  # Use train set also for evaluation for testing
+    print(f"Accuracy: {accuracy}")
+    print(f"Macro F1: {macro_f1}")
 
 

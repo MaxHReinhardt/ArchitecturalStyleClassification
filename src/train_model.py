@@ -13,6 +13,8 @@ def train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, 
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
+    losses = []
+
     for epoch in range(num_epochs):
 
         running_loss = 0.0
@@ -36,7 +38,10 @@ def train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, 
             running_loss += loss.item()
             if i % 10 == 9:    # print every 10 mini-batches, set to higher value when not in testing
                 print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 10:.3f}')
+                losses.append(running_loss / 10)
                 running_loss = 0.0
+
+    return model, losses
 
 
 # TODO: Implement training with early stopping.

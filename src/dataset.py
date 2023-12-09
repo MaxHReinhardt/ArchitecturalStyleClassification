@@ -26,6 +26,9 @@ class ArchitecturalStylesDataset(Dataset):
         elif image.mode == 'RGBA':
             image = image.convert('RGB')
 
+        elif image.mode == 'CMYK':
+            image = image.convert('RGB')
+
         if self.transform:
             image = self.transform(image)
 

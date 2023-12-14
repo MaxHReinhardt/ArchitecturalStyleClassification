@@ -126,9 +126,11 @@ def train_with_early_stopping(model, train_set, val_set, batch_size, learning_ra
                 model.eval()
                 sum_val_loss = 0.0
                 # calculate validation loss
-                for inputs, targets in val_loader:
+                for i, data in enumerate(val_loader, 0):
+                    # data is a list of [inputs, labels]
+                    inputs, labels = data[0].to(device), data[1].to(device)
                     outputs = model(inputs)
-                    loss = loss_fn(outputs, targets)
+                    loss = loss_fn(outputs, labels)
                     sum_val_loss += loss.item()
                 avg_val_loss = sum_val_loss/len(val_loader)
                 val_loss_development.append(avg_val_loss)

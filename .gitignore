@@ -3,3 +3,4 @@
 /data
 /stored_models
 /tests/.pytest_cache
+.pytest_cache

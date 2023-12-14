@@ -22,10 +22,9 @@ class ArchitecturalStylesDataset(Dataset):
         if image.mode == 'L':
             image = Image.merge('RGB', (image, image, image))
 
-        # Four channel images: Convert RGBA to RGB by removing the alpha channel
+        # Four channel images: Convert RGBA and CMYK to RGB
         elif image.mode == 'RGBA':
             image = image.convert('RGB')
-
         elif image.mode == 'CMYK':
             image = image.convert('RGB')
 

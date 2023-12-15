@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 from sklearn.metrics import f1_score, accuracy_score
+import time
 
 
 def evaluate(model, evaluation_set, batch_size, device):
@@ -14,6 +15,7 @@ def evaluate(model, evaluation_set, batch_size, device):
     all_predictions = []
     all_targets = []
     all_losses = []
+    prediction_times = []
 
     loss_fn = torch.nn.CrossEntropyLoss()
 
@@ -21,9 +23,16 @@ def evaluate(model, evaluation_set, batch_size, device):
         for inputs, targets in evaluation_loader:
             inputs, targets = inputs.to(device), targets.to(device)
 
+            # Start measuring prediction time
+            start_time = time.time()
+
             # Forward pass
             outputs = model(inputs)
             predicted = torch.argmax(outputs, 1)
+
+            # Stop measuring prediction time and store result
+            end_time = time.time()
+            prediction_times.append(end_time - start_time)
 
             # Collect predictions and targets
             all_predictions.extend(predicted.cpu().numpy())
@@ -43,4 +52,8 @@ def evaluate(model, evaluation_set, batch_size, device):
     # Calculate average Cross Entropy Loss
     avg_loss = sum(all_losses) / len(all_losses) if len(all_losses) > 0 else 0.0
 
-    return accuracy, macro_f1, avg_loss
+    # Calculate average prediction time
+    avg_prediction_time = sum(prediction_times) / len(prediction_times) if len(prediction_times) > 0 else 0.0
+
+    return accuracy, macro_f1, avg_loss, avg_prediction_time
+

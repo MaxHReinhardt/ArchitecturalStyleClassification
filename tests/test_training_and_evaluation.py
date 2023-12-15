@@ -49,12 +49,12 @@ def test_training_for_n_epochs_and_evaluation():
     print(f"Train loss development : {train_loss_development}")
 
     # Use train set also for evaluation for testing
-    accuracy, macro_f1, avg_loss = evaluate(model, train_set, batch_size, device)
-    print(f"Accuracy: {accuracy}, Macro F1: {macro_f1}, Average Loss: {avg_loss}")
+    accuracy, macro_f1, avg_loss, avg_prediction_time = evaluate(model, train_set, batch_size, device)
+    print(f"Accuracy: {accuracy}, Macro F1: {macro_f1}, Average loss: {avg_loss}, Average prediction time (seconds): {avg_prediction_time}")
 
 
 def test_training_with_early_stopping():
-    model = MobileNetV1(ch_in=3, n_classes=25)
+    model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=0.75, with_cbam=None)
 
     train_transforms = v2.Compose(
         [
@@ -144,6 +144,3 @@ def test_cbam_integration():
 
     print(f"Train loss development : {train_loss_development}")
 
-    # Use train set also for evaluation for testing
-    accuracy, macro_f1, avg_loss = evaluate(model, train_set, batch_size, device)
-    print(f"Accuracy: {accuracy}, Macro F1: {macro_f1}, Average Loss: {avg_loss}")

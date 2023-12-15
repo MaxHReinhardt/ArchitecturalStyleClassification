@@ -111,30 +111,31 @@ class FinalClassifier(nn.Module):
 
 
 class MobileNetV1(nn.Module):
-    def __init__(self, ch_in, n_classes, with_cbam=False):
+    def __init__(self, ch_in, n_classes, width_multiplier=1, with_cbam=False):
         super(MobileNetV1, self).__init__()
+        width_divisor = 1/width_multiplier
 
         self.convolutional_layers = nn.Sequential(
-            ConvBN(ch_in, 32, 2),
-            ConvDW(32, 64, 1),
-            ConvDW(64, 128, 2),
-            ConvDW(128, 128, 1),
-            ConvDW(128, 256, 2),
-            ConvDW(256, 256, 1),
-            ConvDW(256, 512, 2),
-            ConvDW(512, 512, 1),
-            ConvDW(512, 512, 1),
-            ConvDW(512, 512, 1),
-            ConvDW(512, 512, 1),
-            ConvDW(512, 512, 1),
-            ConvDW(512, 1024, 2),
-            ConvDW(1024, 1024, 1)
+            ConvBN(ch_in, int(32//width_divisor), 2),
+            ConvDW(int(32//width_divisor), int(64//width_divisor), 1),
+            ConvDW(int(64//width_divisor), int(128//width_divisor), 2),
+            ConvDW(int(128//width_divisor), int(128//width_divisor), 1),
+            ConvDW(int(128//width_divisor), int(256//width_divisor), 2),
+            ConvDW(int(256//width_divisor), int(256//width_divisor), 1),
+            ConvDW(int(256//width_divisor), int(512//width_divisor), 2),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
+            ConvDW(int(512//width_divisor), int(1024//width_divisor), 2),
+            ConvDW(int(1024//width_divisor), int(1024//width_divisor), 1)
         )
 
         self.with_cbam = with_cbam
-        self.cbam = CbamIntegration(1024)
+        self.cbam = CbamIntegration(int(1024//width_divisor))
 
-        self.final_classifier = FinalClassifier(1024, n_classes)
+        self.final_classifier = FinalClassifier(int(1024//width_divisor), n_classes)
 
     def forward(self, x):
         x = self.convolutional_layers(x)

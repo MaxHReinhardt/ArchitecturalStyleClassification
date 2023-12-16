@@ -6,7 +6,7 @@ import time
 
 def evaluate(model, evaluation_set, batch_size, device):
     """
-    Calculates accuracy and macro F1 score.
+    Calculates accuracy, macro_f1, avg_loss, avg_prediction_time.
     """
 
     model.eval()

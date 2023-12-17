@@ -10,7 +10,7 @@ def evaluate(model, evaluation_set, batch_size, device):
     """
 
     model.eval()
-    evaluation_loader = DataLoader(dataset=evaluation_set, batch_size=batch_size, shuffle=True)
+    evaluation_loader = DataLoader(dataset=evaluation_set, batch_size=batch_size, shuffle=False)
 
     all_predictions = []
     all_targets = []

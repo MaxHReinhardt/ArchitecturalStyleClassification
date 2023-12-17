@@ -6,8 +6,7 @@ from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetDynamic
 from src.model import MobileNetV1
 from src.train_model import train_with_early_stopping
 from src.evaluate_model import evaluate
-from experiments.experiments import compare_MobileNetV1_model_sizes, effect_cbam_integration, \
-    compare_hyperparameter_configurations
+from experiments.experiments import compare_model_hyperparameter_configurations, compare_training_hyperparameter_configurations
 
 
 def test_preprocessing():
@@ -99,25 +98,20 @@ def test_training_with_early_stopping():
     print(f"Accuracy: {accuracy}, Average loss: {avg_loss}, Average prediction time (seconds): {avg_prediction_time}")
 
 
-def test_compare_MobileNetV1_model_sizes():
+def test_compare_model_hyperparameter_configurations():
     """
     Verifies that compare_MobileNetV1_model_sizes() experiment runs without errors.
     """
     train_csv = "data/dataset/train_annotation_tiny.csv"
     validation_csv = "data/dataset/train_annotation_tiny.csv"
-    width_multiplier_list = [1, 0.75]
+    width_multiplier_list = [0.5]
     resolution_list = [160]
-    compare_MobileNetV1_model_sizes(width_multiplier_list, resolution_list, train_csv, validation_csv)
-
-
-def test_effect_cbam_integration():
-    """
-    Verifies that effect_cbam_integration() experiment runs without errors.
-    """
-    train_csv = "data/dataset/train_annotation_tiny.csv"
-    validation_csv = "data/dataset/train_annotation_tiny.csv"
     with_cbam_variant_list = [True]
-    effect_cbam_integration(with_cbam_variant_list, train_csv, validation_csv)
+    compare_model_hyperparameter_configurations(width_multiplier_list,
+                                                resolution_list,
+                                                with_cbam_variant_list,
+                                                train_csv,
+                                                validation_csv)
 
 
 def test_compare_hyperparameter_configurations():
@@ -128,4 +122,4 @@ def test_compare_hyperparameter_configurations():
     validation_csv = "data/dataset/train_annotation_tiny.csv"
     learning_rate_range = [0.001, 0.01]
     batch_size_range = [32, 64]
-    compare_hyperparameter_configurations(learning_rate_range, batch_size_range, train_csv, validation_csv)
+    compare_training_hyperparameter_configurations(learning_rate_range, batch_size_range, train_csv, validation_csv)

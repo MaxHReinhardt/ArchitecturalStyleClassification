@@ -4,3 +4,4 @@
 /stored_models
 /tests/.pytest_cache
 .pytest_cache
+/models_from_colab_execution

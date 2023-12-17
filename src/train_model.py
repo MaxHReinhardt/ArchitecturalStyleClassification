@@ -81,7 +81,7 @@ class EarlyStopping:
         return False
 
 
-def train_with_early_stopping(model, train_set, val_set, batch_size, learning_rate, max_num_epochs, device):
+def train_with_early_stopping(model, train_set, val_set, batch_size, learning_rate, max_num_epochs, device, weight_decay=0):
     """
     Trains a model using cross entropy error and Adam optimizer using early stopping.
     """
@@ -90,7 +90,7 @@ def train_with_early_stopping(model, train_set, val_set, batch_size, learning_ra
     train_loader = DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(dataset=val_set, batch_size=batch_size, shuffle=True)
     loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
     es = EarlyStopping()
 
     train_loss_development = []

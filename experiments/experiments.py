@@ -11,6 +11,7 @@ from src.evaluate_model import evaluate
 def compare_model_hyperparameter_configurations(width_multiplier_list, resolution_list, with_cbam_variant_list, train_csv, validation_csv):
     batch_size = 64
     learning_rate = 0.003
+    weight_decay = 1e-3
     max_num_epochs = 100
 
     # Check if CUDA (GPU) is available
@@ -35,7 +36,8 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
                                                                                                         batch_size,
                                                                                                         learning_rate,
                                                                                                         max_num_epochs,
-                                                                                                        device)
+                                                                                                        device,
+                                                                                                        weight_decay)
 
                 model_name = f"{width_multiplier}-MobileNetV1-{resolution}_{'with_cbam' if with_cbam else ''}"
                 model_path = os.path.join("stored_models/", model_name + ".pth")

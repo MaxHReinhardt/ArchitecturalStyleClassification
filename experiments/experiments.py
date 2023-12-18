@@ -12,7 +12,7 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
                                                 cbam_all_layers_variant_list, train_csv, validation_csv):
     batch_size = 64
     learning_rate = 0.003
-    weight_decay = 1e-3
+    weight_decay = 0
     max_num_epochs = 100
 
     # Check if CUDA (GPU) is available
@@ -30,7 +30,7 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
                                                                        validation_csv=validation_csv).get_data()
 
                     model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
-                                        cbam_all_layers=cbam_all_layers, cbam_last_layer = cbam_last_layer)
+                                        cbam_all_layers=cbam_all_layers, cbam_last_layer=cbam_last_layer)
                     model.to(device)
 
                     trained_model, train_loss_development, val_loss_development = train_with_early_stopping(model,
@@ -56,14 +56,14 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
                           f"Average prediction time (seconds): {avg_prediction_time}")
 
 
-#TODO: Adjust settings/namings according to previous experiments
 def compare_training_hyperparameter_configurations(learning_rate_range, batch_size_range, num_configurations, train_csv, validation_csv):
+    weight_decay = 0
     max_num_epochs = 100
 
-    resolution = 160
+    resolution = 384
     width_multiplier = 1
-    cbam_last_layer = True
-    cbam_all_layers = False
+    cbam_last_layer = False
+    cbam_all_layers = True
 
     # Check if CUDA (GPU) is available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -90,9 +90,10 @@ def compare_training_hyperparameter_configurations(learning_rate_range, batch_si
                                                                                                 batch_size,
                                                                                                 learning_rate,
                                                                                                 max_num_epochs,
-                                                                                                device)
+                                                                                                device,
+                                                                                                weight_decay)
 
-        model_name = f"{width_multiplier}-MobileNetV1-{resolution}_cbam_{learning_rate}_{batch_size}"
+        model_name = f"{width_multiplier}-MobileNetV1-{resolution}_cbam_all_layers_lr-{learning_rate}_bs-{batch_size}"
         model_path = os.path.join("stored_models/", model_name + ".pth")
         torch.save(trained_model.state_dict(), model_path)
 

@@ -67,7 +67,7 @@ class CbamIntegration(nn.Module):
 
 
 class ConvBN(nn.Module):
-    def __init__(self, inp, oup, stride):
+    def __init__(self, inp, oup, stride, has_cbam = False):
         super(ConvBN, self).__init__()
         self.conv_bn = nn.Sequential(
             nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
@@ -75,12 +75,18 @@ class ConvBN(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+        self.has_cbam = has_cbam
+        self.cbam = CbamIntegration(oup)
+
     def forward(self, x):
-        return self.conv_bn(x)
+        x = self.conv_bn(x)
+        if self.has_cbam:
+            x = self.cbam(x)
+        return x
 
 
 class ConvDW(nn.Module):
-    def __init__(self, inp, oup, stride):
+    def __init__(self, inp, oup, stride, has_cbam = False):
         super(ConvDW, self).__init__()
         self.conv_dw = nn.Sequential(
             # depth-wise convolution
@@ -93,8 +99,14 @@ class ConvDW(nn.Module):
             nn.ReLU(inplace=True)
         )
 
+        self.has_cbam = has_cbam
+        self.cbam = CbamIntegration(oup)
+
     def forward(self, x):
-        return self.conv_dw(x)
+        x = self.conv_dw(x)
+        if self.has_cbam:
+            x = self.cbam(x)
+        return x
 
 
 class FinalClassifier(nn.Module):
@@ -111,35 +123,30 @@ class FinalClassifier(nn.Module):
 
 
 class MobileNetV1(nn.Module):
-    def __init__(self, ch_in, n_classes, width_multiplier=1, with_cbam=False):
+    def __init__(self, ch_in, n_classes, width_multiplier=1, cbam_all_layers = False, cbam_last_layer=False):
         super(MobileNetV1, self).__init__()
         width_divisor = 1/width_multiplier
 
         self.convolutional_layers = nn.Sequential(
-            ConvBN(ch_in, int(32//width_divisor), 2),
-            ConvDW(int(32//width_divisor), int(64//width_divisor), 1),
-            ConvDW(int(64//width_divisor), int(128//width_divisor), 2),
-            ConvDW(int(128//width_divisor), int(128//width_divisor), 1),
-            ConvDW(int(128//width_divisor), int(256//width_divisor), 2),
-            ConvDW(int(256//width_divisor), int(256//width_divisor), 1),
-            ConvDW(int(256//width_divisor), int(512//width_divisor), 2),
-            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
-            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
-            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
-            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
-            ConvDW(int(512//width_divisor), int(512//width_divisor), 1),
-            ConvDW(int(512//width_divisor), int(1024//width_divisor), 2),
-            ConvDW(int(1024//width_divisor), int(1024//width_divisor), 1)
+            ConvBN(ch_in, int(32//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(32//width_divisor), int(64//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(64//width_divisor), int(128//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(128//width_divisor), int(128//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(128//width_divisor), int(256//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(256//width_divisor), int(256//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(256//width_divisor), int(512//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(1024//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(1024//width_divisor), int(1024//width_divisor), 1, cbam_all_layers or cbam_last_layer)
         )
-
-        self.with_cbam = with_cbam
-        self.cbam = CbamIntegration(int(1024//width_divisor))
 
         self.final_classifier = FinalClassifier(int(1024//width_divisor), n_classes)
 
     def forward(self, x):
         x = self.convolutional_layers(x)
-        if self.with_cbam:
-            x = self.cbam(x)
         x = self.final_classifier(x)
         return x

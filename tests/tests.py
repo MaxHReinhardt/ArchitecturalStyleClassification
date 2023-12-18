@@ -63,7 +63,8 @@ def test_training_with_early_stopping():
     learning_rate = 0.003
     max_num_epochs = 2
 
-    with_cbam = True
+    cbam_last_layer = True
+    cbam_all_layers = False
     width_multiplier = 1
     resolution = 128
 
@@ -77,7 +78,8 @@ def test_training_with_early_stopping():
     validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
                                                        validation_csv="data/dataset/train_annotation_tiny.csv").get_data()
 
-    model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier, with_cbam=with_cbam)
+    model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
+                        cbam_last_layer=cbam_last_layer, cbam_all_layers=cbam_all_layers)
     model.to(device)
 
     trained_model, train_loss_development, val_loss_development = train_with_early_stopping(model,
@@ -106,10 +108,10 @@ def test_compare_model_hyperparameter_configurations():
     validation_csv = "data/dataset/train_annotation_tiny.csv"
     width_multiplier_list = [0.5]
     resolution_list = [160]
-    with_cbam_variant_list = [True]
+    cbam_last_layer_variant_list = [True]
     compare_model_hyperparameter_configurations(width_multiplier_list,
                                                 resolution_list,
-                                                with_cbam_variant_list,
+                                                cbam_last_layer_variant_list,
                                                 train_csv,
                                                 validation_csv)
 

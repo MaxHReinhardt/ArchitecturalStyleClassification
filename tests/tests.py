@@ -78,7 +78,7 @@ def test_training_with_early_stopping_and_evaluation():
     validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
                                                        evaluation_csv="data/dataset/train_annotation_tiny.csv").get_data()
 
-    model = MobileNetV1(input_channels=3, n_classes=25, width_multiplier=width_multiplier,
+    model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                         cbam_last_layer=cbam_last_layer, cbam_all_layers=cbam_all_layers)
     model.to(device)
 

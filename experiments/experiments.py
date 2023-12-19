@@ -33,7 +33,7 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
         validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
                                                            evaluation_csv=validation_csv).get_data()
 
-        model = MobileNetV1(input_channels=3, n_classes=25, width_multiplier=width_multiplier,
+        model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                             cbam_all_layers=cbam_all_layers, cbam_last_layer=cbam_last_layer)
         model.to(device)
 
@@ -88,7 +88,7 @@ def compare_training_hyperparameter_configurations(learning_rate_range, batch_si
         validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
                                                            evaluation_csv=validation_csv).get_data()
 
-        model = MobileNetV1(input_channels=3, n_classes=25, width_multiplier=width_multiplier,
+        model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                             cbam_all_layers=cbam_all_layers, cbam_last_layer=cbam_last_layer)
         model.to(device)
 

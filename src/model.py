@@ -3,16 +3,16 @@ import torch.nn as nn
 
 
 class ChannelAttentionModule(nn.Module):
-    def __init__(self, channel):
+    def __init__(self, ch):
         super(ChannelAttentionModule, self).__init__()
         ratio = 16
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
         self.max_pool = nn.AdaptiveMaxPool2d(1)
 
         self.mlp = nn.Sequential(
-            nn.Linear(channel, channel//ratio, bias=False),
+            nn.Linear(ch, ch//ratio, bias=False),
             nn.ReLU(inplace=True),
-            nn.Linear(channel//ratio, channel, bias=False)
+            nn.Linear(ch//ratio, ch, bias=False)
         )
 
         self.sigmoid = nn.Sigmoid()
@@ -26,11 +26,11 @@ class ChannelAttentionModule(nn.Module):
         x2 = self.mlp(x2.view(x2.size(0), -1))
         x2 = x2.view(x2.size(0), x2.size(1), 1, 1)
 
-        attention = x1 + x2
-        attention = self.sigmoid(attention)
-        refined_x = x * attention
+        feats = x1 + x2
+        feats = self.sigmoid(feats)
+        refined_feats = x * feats
 
-        return refined_x
+        return refined_feats
 
 
 class SpatialAttentionModule(nn.Module):
@@ -44,39 +44,39 @@ class SpatialAttentionModule(nn.Module):
         x1 = torch.mean(x, dim=1, keepdim=True)
         x2, _ = torch.max(x, dim=1, keepdim=True)
 
-        attention = torch.cat([x1, x2], dim=1)
-        attention = self.conv(attention)
-        attention = self.sigmoid(attention)
-        refined_x = x * attention
+        feats = torch.cat([x1, x2], dim=1)
+        feats = self.conv(feats)
+        feats = self.sigmoid(feats)
+        refined_feats = x * feats
 
-        return refined_x
+        return refined_feats
 
 
 class CbamIntegration(nn.Module):
     def __init__(self, channel):
         super(CbamIntegration, self).__init__()
-        self.channel_attention = ChannelAttentionModule(channel)
-        self.spatial_attention = SpatialAttentionModule()
+        self.ca = ChannelAttentionModule(channel)
+        self.sa = SpatialAttentionModule()
 
     def forward(self, x):
         residual = x
-        x = self.channel_attention(x)
-        x = self.spatial_attention(x)
+        x = self.ca(x)
+        x = self.sa(x)
         out = x + residual
         return out
 
 
-class ConvolutionBatchNorm(nn.Module):
-    def __init__(self, input_channel, output_channel, stride, has_cbam = False):
-        super(ConvolutionBatchNorm, self).__init__()
+class ConvBN(nn.Module):
+    def __init__(self, inp, oup, stride, has_cbam = False):
+        super(ConvBN, self).__init__()
         self.conv_bn = nn.Sequential(
-            nn.Conv2d(input_channel, output_channel, 3, stride, 1, bias=False),
-            nn.BatchNorm2d(output_channel),
+            nn.Conv2d(inp, oup, 3, stride, 1, bias=False),
+            nn.BatchNorm2d(oup),
             nn.ReLU(inplace=True)
         )
 
         self.has_cbam = has_cbam
-        self.cbam = CbamIntegration(output_channel)
+        self.cbam = CbamIntegration(oup)
 
     def forward(self, x):
         x = self.conv_bn(x)
@@ -85,25 +85,25 @@ class ConvolutionBatchNorm(nn.Module):
         return x
 
 
-class DepthWiseSeparableConvolution(nn.Module):
-    def __init__(self, input_channel, output_channel, stride, has_cbam = False):
-        super(DepthWiseSeparableConvolution, self).__init__()
-        self.depthwise_separable_conv = nn.Sequential(
+class ConvDW(nn.Module):
+    def __init__(self, inp, oup, stride, has_cbam = False):
+        super(ConvDW, self).__init__()
+        self.conv_dw = nn.Sequential(
             # depth-wise convolution
-            nn.Conv2d(input_channel, input_channel, 3, stride, 1, groups=input_channel, bias=False),
-            nn.BatchNorm2d(input_channel),
+            nn.Conv2d(inp, inp, 3, stride, 1, groups=inp, bias=False),
+            nn.BatchNorm2d(inp),
             nn.ReLU(inplace=True),
             # point-wise convolution
-            nn.Conv2d(input_channel, output_channel, 1, 1, 0, bias=False),
-            nn.BatchNorm2d(output_channel),
+            nn.Conv2d(inp, oup, 1, 1, 0, bias=False),
+            nn.BatchNorm2d(oup),
             nn.ReLU(inplace=True)
         )
 
         self.has_cbam = has_cbam
-        self.cbam = CbamIntegration(output_channel)
+        self.cbam = CbamIntegration(oup)
 
     def forward(self, x):
-        x = self.depthwise_separable_conv(x)
+        x = self.conv_dw(x)
         if self.has_cbam:
             x = self.cbam(x)
         return x
@@ -113,12 +113,12 @@ class FinalClassifier(nn.Module):
     def __init__(self, in_features, n_classes):
         super(FinalClassifier, self).__init__()
         self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.fully_connected_layer = nn.Linear(in_features, n_classes)
+        self.fc = nn.Linear(in_features, n_classes)
 
     def forward(self, x):
         x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
-        x = self.fully_connected_layer(x)
+        x = self.fc(x)
         return x
 
 
@@ -128,25 +128,25 @@ class MobileNetV1(nn.Module):
     last convolutional layer or after all convolutional layers.
     """
 
-    def __init__(self, input_channels, n_classes, width_multiplier=1, cbam_all_layers = False, cbam_last_layer=False):
+    def __init__(self, ch_in, n_classes, width_multiplier=1, cbam_all_layers = False, cbam_last_layer=False):
         super(MobileNetV1, self).__init__()
         width_divisor = 1/width_multiplier
 
         self.convolutional_layers = nn.Sequential(
-            ConvolutionBatchNorm(input_channels, int(32 // width_divisor), 2, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(32 // width_divisor), int(64 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(64 // width_divisor), int(128 // width_divisor), 2, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(128 // width_divisor), int(128 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(128 // width_divisor), int(256 // width_divisor), 2, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(256 // width_divisor), int(256 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(256 // width_divisor), int(512 // width_divisor), 2, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(512 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(512 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(512 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(512 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(512 // width_divisor), 1, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(512 // width_divisor), int(1024 // width_divisor), 2, cbam_all_layers),
-            DepthWiseSeparableConvolution(int(1024 // width_divisor), int(1024 // width_divisor), 1, cbam_all_layers or cbam_last_layer)
+            ConvBN(ch_in, int(32//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(32//width_divisor), int(64//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(64//width_divisor), int(128//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(128//width_divisor), int(128//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(128//width_divisor), int(256//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(256//width_divisor), int(256//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(256//width_divisor), int(512//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(512//width_divisor), 1, cbam_all_layers),
+            ConvDW(int(512//width_divisor), int(1024//width_divisor), 2, cbam_all_layers),
+            ConvDW(int(1024//width_divisor), int(1024//width_divisor), 1, cbam_all_layers or cbam_last_layer)
         )
 
         self.final_classifier = FinalClassifier(int(1024//width_divisor), n_classes)

@@ -27,7 +27,7 @@ conflicting goals. However, since all tested model configurations are based on M
 eligible for the use on mobile devices. Additionally, the classical use cases for architectural style classification
 (tourism, education) do not require exceptionally fast inference. Therefore, accuracy was used as the primary metric 
 guiding model development. Accuracy was also reported for the model proposed by Wang et. al. [2] that 
-currently can be considered as state if the art. The model achieves an accuracy of 64.39% on the architectural 
+currently can be considered as state of the art. The model achieves an accuracy of 64.39% on the architectural 
 style dataset from Xu et. al. [3] combining the Inception-v3 model with a channel-spatial attention mechanism. Due to 
 the significantly lower model capacity, it is very unlikely to obtain a similar accuracy with a model based on 
 MobileNetV1, despite the use of a larger dataset. However, the goal of this project is to get there as close as possible
@@ -54,7 +54,7 @@ small dataset. Very small architectures with a width around 25% seem to have too
 classification tasks. 
 * Experiment 2: The second experiment aimed at investigating the effect of adding CBAM after the last convolutional 
 layer as it proved to be effective in the model proposed by Wang et. al. [2]. Therefore, three additional models were 
-trained with a resolution of 384x384, varying model widths (100%, 50%, 25%) and an integrated CBAM module after the 
+trained with a resolution of 384x384, varying model widths (100%, 75%, 50%) and an integrated CBAM module after the 
 convolutional layers. All three models performed slightly worse compared to the corresponding MobileNets without the 
 CBAM integration. 
 * Experiment 3: As experiment 1 implies possible advantages of smaller architectures due to their regularizing effect, 
@@ -73,7 +73,7 @@ Finding the right hyperparameters for model training:
 configuration using random search. Therefore, learning rates were varied between 1e-4 and 1e-2, batch sizes were varied 
 between 32 and 128. In total, 10 random combinations were evaluated. However, no better model could be found with 
 experiment 5.
-* Experiment 6: The results of experiment 5 indicate that an optimal learning rate might lay between 0.002 and 0.005. 
+* Experiment 6: The results of experiment 5 indicate that an optimal learning rate might lie between 0.002 and 0.005. 
 Regarding batch size, results were inconclusive. Thus, experiment 6 repeated experiment 5 with 8 randomly drawn
 combinations, learning rates between 0.002 and 0.005 and batch sizes between 32 and 128. Experiment 6 did also not 
 reveal a better hyperparameter configuration. However, experiment 5 and 6 provide additional indication that the 
@@ -95,7 +95,7 @@ documentation as the same preprocessing and training modules were used for both 
 training was performed as part of the experiments. Testing and refactoring are subsumed under the related tasks. 
 
 Efforts are reported in days whereby one day corresponds to approximately 8 hours which were not necessarily worked in 
-one piece. All in all model development took approximately 8 days (9 were estimated in Assignment 1).
+one piece. All in all, model development took approximately 8 days (9 were estimated in Assignment 1).
 
 Amount of time spend on tasks in days (estimated durations from Assignment 1 in brackets):
 * Dataset collection and preparation: 1 (0)
@@ -117,14 +117,14 @@ Follow these steps to prepare the data:
 3. Create a folder "data" within the repository and move the unpacked downloaded dataset directory into that folder
 4. Run src/data_management.py to split the dataset and create annotation files
 
-Follow these steps to run the tests (locally):
+After preparing the data, follow these steps to run the tests (locally):
 1. For efficient testing, it is recommended to create two files "data/dataset/train_annotation_tiny.csv" and 
-"data/dataset/train_annotation_tiny.csv" by duplicating the corresponding annotation files and deleting most rows, such 
+"data/dataset/validation_annotation_tiny.csv" by duplicating the corresponding annotation files and deleting most rows, such 
 that tests can be performed on small example datasets
 2. Install the requirements from requirements.txt
 3. Run the tests in tests/tests.py (depending on local configurations, one has to adjust the file paths)
 
-Follow these steps to explore different model and training configurations (in colab):
+After preparing the data, follow these steps to explore different model and training configurations (in colab):
 1. Zip the data folder and upload it to Google Drive
 2. Open colab_execution/experiment_compare_model_hyperparameters.ipynb or 
 colab_execution/experiment_compare_training_hyperparameters.ipynb from GitHub in Colab

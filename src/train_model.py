@@ -4,49 +4,11 @@ from torch.utils.data import DataLoader
 import copy
 
 
-def train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, device):
-    """
-    Trains a model using cross entropy error and Adam optimizer for a predefined number of epochs.
-    """
-
-    model.train()
-    train_loader = DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
-    loss_fn = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    train_loss_development = []
-
-    for epoch in range(num_epochs):
-        sum_train_loss = 0.0
-
-        # loop over batches
-        for i, data in enumerate(train_loader, 0):
-
-            # data is a list of [inputs, labels]
-            inputs, labels = data[0].to(device), data[1].to(device)
-
-            # zero the parameter gradients
-            optimizer.zero_grad()
-
-            # forward + backward + optimize
-            outputs = model(inputs)
-            loss = loss_fn(outputs, labels)
-            loss.backward()
-            optimizer.step()
-
-            # track losses
-            sum_train_loss += loss.item()
-
-            # print epoch statistics
-            if i == len(train_loader) - 1:
-                avg_train_loss = sum_train_loss / len(train_loader)
-                train_loss_development.append(avg_train_loss)
-                print(f"Epoch: {epoch}, train_loss: {avg_train_loss:>7f}")
-
-    return model, train_loss_development
-
-
 class EarlyStopping:
+    """
+    Keeps track of the early stopping criterion.
+    """
+
     def __init__(self, patience=5, min_delta=0, restore_best_weights=True):
         self.patience = patience
         self.min_delta = min_delta
@@ -145,3 +107,45 @@ def train_with_early_stopping(model, train_set, val_set, batch_size, learning_ra
                       f"Early stopping status: {es.status}")
 
     return model, train_loss_development, val_loss_development
+
+
+def train_for_n_epochs(model, train_set, batch_size, learning_rate, num_epochs, device):
+    """
+    Trains a model using cross entropy error and Adam optimizer for a predefined number of epochs.
+    """
+
+    model.train()
+    train_loader = DataLoader(dataset=train_set, batch_size=batch_size, shuffle=True)
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    train_loss_development = []
+
+    for epoch in range(num_epochs):
+        sum_train_loss = 0.0
+
+        # loop over batches
+        for i, data in enumerate(train_loader, 0):
+
+            # data is a list of [inputs, labels]
+            inputs, labels = data[0].to(device), data[1].to(device)
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            # forward + backward + optimize
+            outputs = model(inputs)
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # track losses
+            sum_train_loss += loss.item()
+
+            # print epoch statistics
+            if i == len(train_loader) - 1:
+                avg_train_loss = sum_train_loss / len(train_loader)
+                train_loss_development.append(avg_train_loss)
+                print(f"Epoch: {epoch}, train_loss: {avg_train_loss:>7f}")
+
+    return model, train_loss_development

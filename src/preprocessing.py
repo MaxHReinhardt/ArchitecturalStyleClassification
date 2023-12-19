@@ -8,6 +8,10 @@ from torch.utils.data import DataLoader
 
 
 class ArchitecturalStylesDataset(Dataset):
+    """
+    Dataset class for the architectural style dataset
+    (https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset). Converts all images into RGB images.
+    """
     def __init__(self, csv_file, transform=None):
         self.annotations = pd.read_csv(csv_file)
         self.transform = transform
@@ -37,12 +41,17 @@ class ArchitecturalStylesDataset(Dataset):
 
 
 class TrainSetDynamicNormalization:
+    """
+    Train set class that applies training transforms including data augmentation and dynamic normalization.
+    """
+
     def __init__(self, resolution, train_csv):
         self.train_transforms = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.uint8, scale=True),
             v2.Resize(size=(resolution, resolution), antialias=True),
 
+            # Data Augmentation
             v2.RandomAffine(degrees=20, translate=(0.1, 0.1), scale=(0.8, 1.2), shear=10),
             v2.RandomHorizontalFlip(p=0.5),
             v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=None),
@@ -55,13 +64,11 @@ class TrainSetDynamicNormalization:
             transform=self.train_transforms,
         )
 
-        # Calculate mean and standard deviation dynamically based on the resolution
-        self.mean, self.std = self.calculate_normalization_values(resolution)
+        # Calculate mean and standard deviation for dynamic normalization
+        self.mean, self.std = self.calculate_normalization_values()
+        self.train_transforms.transforms.append(v2.Normalize(mean=self.mean, std=self.std)) # train_transforms.transforms is a list
 
-        # Add normalization to transforms
-        self.train_transforms.transforms.append(v2.Normalize(mean=self.mean, std=self.std))
-
-    def calculate_normalization_values(self, resolution):
+    def calculate_normalization_values(self):
         data_loader = DataLoader(
             self.train_set,
             batch_size=32,
@@ -89,8 +96,12 @@ class TrainSetDynamicNormalization:
 
 
 class EvaluationSetDynamicNormalization:
-    def __init__(self, resolution, validation_csv):
-        self.validation_transforms = v2.Compose([
+    """
+    Evaluation set class that applies transforms similar to the train transforms but omits data augmentation.
+    """
+
+    def __init__(self, resolution, evaluation_csv):
+        self.evaluation_transforms = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.uint8, scale=True),
             v2.Resize(size=(resolution, resolution), antialias=True),
@@ -98,20 +109,18 @@ class EvaluationSetDynamicNormalization:
             v2.ToDtype(torch.float32, scale=True),
         ])
 
-        self.validation_set = ArchitecturalStylesDataset(
-            csv_file=validation_csv,
-            transform=self.validation_transforms,
+        self.evaluation_set = ArchitecturalStylesDataset(
+            csv_file=evaluation_csv,
+            transform=self.evaluation_transforms,
         )
 
-        # Calculate mean and standard deviation dynamically based on the resolution
-        self.mean, self.std = self.calculate_normalization_values(resolution)
+        # Calculate mean and standard deviation for dynamic normalization
+        self.mean, self.std = self.calculate_normalization_values()
+        self.evaluation_transforms.transforms.append(v2.Normalize(mean=self.mean, std=self.std)) # evaluation_transforms.transforms is a list
 
-        # Update normalization in transforms
-        self.validation_transforms.transforms.append(v2.Normalize(mean=self.mean, std=self.std))
-
-    def calculate_normalization_values(self, resolution):
+    def calculate_normalization_values(self):
         data_loader = DataLoader(
-            self.validation_set,
+            self.evaluation_set,
             batch_size=32,
             shuffle=False
         )
@@ -130,13 +139,17 @@ class EvaluationSetDynamicNormalization:
         return mean.tolist(), std.tolist()
 
     def get_transforms(self):
-        return self.validation_transforms
+        return self.evaluation_transforms
 
     def get_data(self):
-        return self.validation_set
+        return self.evaluation_set
 
 
 class TrainSetStaticNormalization:
+    """
+    Old train set class without dynamic normalization.
+    """
+
     def __init__(self, resolution, train_csv):
         self.train_transforms = v2.Compose([
             v2.ToImage(),
@@ -164,8 +177,12 @@ class TrainSetStaticNormalization:
 
 
 class EvaluationSetStaticNormalization:
-    def __init__(self, resolution, validation_csv):
-        self.validation_transforms = v2.Compose([
+    """
+    Old evaluation set class without dynamic normalization.
+    """
+
+    def __init__(self, resolution, evaluation_csv):
+        self.evaluation_transforms = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.uint8, scale=True),
             v2.Resize(size=(resolution, resolution), antialias=True),
@@ -174,13 +191,13 @@ class EvaluationSetStaticNormalization:
             v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
         ])
 
-        self.validation_set = ArchitecturalStylesDataset(
-            csv_file=validation_csv,
-            transform=self.validation_transforms,
+        self.evaluation_set = ArchitecturalStylesDataset(
+            csv_file=evaluation_csv,
+            transform=self.evaluation_transforms,
         )
 
     def get_transforms(self):
-        return self.validation_transforms
+        return self.evaluation_transforms
 
     def get_data(self):
-        return self.validation_set
+        return self.evaluation_set

@@ -42,17 +42,13 @@ def evaluate(model, evaluation_set, batch_size, device):
             loss = loss_fn(outputs, targets)
             all_losses.append(loss.item())
 
-    # Calculate accuracy
     accuracy = accuracy_score(all_targets, all_predictions)
 
-    # Calculate macro F1 score
     # Macro f1 score is used as class distribution in dataset does not necessarily represent real-world distributions
     macro_f1 = f1_score(all_targets, all_predictions, average='macro')
 
-    # Calculate average Cross Entropy Loss
     avg_loss = sum(all_losses) / len(all_losses) if len(all_losses) > 0 else 0.0
 
-    # Calculate average prediction time
     avg_prediction_time = sum(prediction_times) / len(prediction_times) if len(prediction_times) > 0 else 0.0
 
     return accuracy, macro_f1, avg_loss, avg_prediction_time

@@ -32,7 +32,7 @@ def test_preprocessing():
     assert any(isinstance(transform, v2.Normalize) for transform
                in train_set_dynamic_norm.train_transforms.transforms)
     assert any(isinstance(transform, v2.Normalize) for transform
-               in validation_set_dynamic_norm.validation_transforms.transforms)
+               in validation_set_dynamic_norm.evaluation_transforms.transforms)
 
     # Test normalization: check if mean is approximately 0 and std is approximately 1
     for dataset in datasets:
@@ -53,7 +53,7 @@ def test_preprocessing():
         assert torch.allclose(std, torch.ones_like(std), atol=1e-2)
 
 
-def test_training_with_early_stopping():
+def test_training_with_early_stopping_and_evaluation():
     """
     The test verifies that training and evaluation of the model runs without errors and that training leads to an
     improvement in train error. For testing purposes, tiny versions of train and validation set are used.
@@ -76,9 +76,9 @@ def test_training_with_early_stopping():
     train_set = TrainSetDynamicNormalization(resolution=resolution,
                                              train_csv="data/dataset/train_annotation_tiny.csv").get_data()
     validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
-                                                       validation_csv="data/dataset/train_annotation_tiny.csv").get_data()
+                                                       evaluation_csv="data/dataset/train_annotation_tiny.csv").get_data()
 
-    model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
+    model = MobileNetV1(input_channels=3, n_classes=25, width_multiplier=width_multiplier,
                         cbam_last_layer=cbam_last_layer, cbam_all_layers=cbam_all_layers)
     model.to(device)
 
@@ -93,10 +93,10 @@ def test_training_with_early_stopping():
     # Test if training leads to improvement on train set
     assert train_loss_development[0] > train_loss_development[1]
 
-    accuracy, macro_f1, avg_loss, avg_prediction_time = evaluate(trained_model,
-                                                                 validation_set,
-                                                                 batch_size,
-                                                                 device)
+    accuracy, _, avg_loss, avg_prediction_time = evaluate(trained_model,
+                                                          validation_set,
+                                                          batch_size,
+                                                          device)
     print(f"Accuracy: {accuracy}, Average loss: {avg_loss}, Average prediction time (seconds): {avg_prediction_time}")
 
 
@@ -104,24 +104,33 @@ def test_compare_model_hyperparameter_configurations():
     """
     Verifies that compare_MobileNetV1_model_sizes() experiment runs without errors.
     """
+
     train_csv = "data/dataset/train_annotation_tiny.csv"
-    validation_csv = "data/dataset/train_annotation_tiny.csv"
+    validation_csv = "data/dataset/validation_annotation_tiny.csv"
     width_multiplier_list = [0.5]
     resolution_list = [160]
     cbam_last_layer_variant_list = [True]
+    cbam_all_layers_variant_list = [False]
     compare_model_hyperparameter_configurations(width_multiplier_list,
                                                 resolution_list,
                                                 cbam_last_layer_variant_list,
+                                                cbam_all_layers_variant_list,
                                                 train_csv,
                                                 validation_csv)
 
 
-def test_compare_hyperparameter_configurations():
+def test_compare_training_hyperparameter_configurations():
     """
     Verifies that compare_hyperparameter_configurations() experiment runs without errors.
     """
+
     train_csv = "data/dataset/train_annotation_tiny.csv"
-    validation_csv = "data/dataset/train_annotation_tiny.csv"
-    learning_rate_range = [0.001, 0.01]
-    batch_size_range = [32, 64]
-    compare_training_hyperparameter_configurations(learning_rate_range, batch_size_range, train_csv, validation_csv)
+    validation_csv = "data/dataset/validation_annotation_tiny.csv"
+    learning_rate_range = [0.003, 0.003]
+    batch_size_range = [64, 64]
+    num_configurations = 1
+    compare_training_hyperparameter_configurations(learning_rate_range,
+                                                   batch_size_range,
+                                                   num_configurations,
+                                                   train_csv,
+                                                   validation_csv)

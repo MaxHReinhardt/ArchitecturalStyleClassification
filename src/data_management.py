@@ -41,25 +41,20 @@ def split_data(source_folder, output_folder, train_frac=0.6, test_frac=0.2, val_
         # Get the list of images for each class
         images = os.listdir(os.path.join(source_folder, label))
 
-        # Shuffle the images randomly
         random.seed(seed)
         random.shuffle(images)
 
-        # Calculate the split indices (Splitting for each class preserves class balances.)
+        # Calculate the splits (Splitting for each class preserves class balances.)
         train_split = int(train_frac * len(images))
         test_split = int((train_frac + test_frac) * len(images))
-
-        # Split into train/test/validation set
         train_images = images[:train_split]
         test_images = images[train_split:test_split]
         val_images = images[test_split:]
 
-        # Move images to corresponding folders and rename
         move_and_rename(source_folder, train_images, label, train_folder)
         move_and_rename(source_folder, test_images, label, test_folder)
         move_and_rename(source_folder, val_images, label, val_folder)
 
-    # Create annotation files in CSV format for train/test/validation set
     create_annotation_file_csv(train_folder, os.path.join(output_folder, 'train_annotation.csv'), class_encoding)
     create_annotation_file_csv(test_folder, os.path.join(output_folder, 'test_annotation.csv'), class_encoding)
     create_annotation_file_csv(val_folder, os.path.join(output_folder, 'validation_annotation.csv'), class_encoding)

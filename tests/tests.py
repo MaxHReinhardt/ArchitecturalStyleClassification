@@ -1,6 +1,7 @@
 from torchvision.transforms import v2
 import torch
 from torch.utils.data import DataLoader
+import os
 
 from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetDynamicNormalization
 from src.model import MobileNetV1
@@ -105,6 +106,9 @@ def test_compare_model_hyperparameter_configurations():
     Verifies that compare_MobileNetV1_model_sizes() experiment runs without errors.
     """
 
+    folder_name = "stored_models"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
     train_csv = "data/dataset/train_annotation_tiny.csv"
     validation_csv = "data/dataset/validation_annotation_tiny.csv"
     width_multiplier_list = [0.5]
@@ -124,6 +128,9 @@ def test_compare_training_hyperparameter_configurations():
     Verifies that compare_hyperparameter_configurations() experiment runs without errors.
     """
 
+    folder_name = "stored_models"
+    if not os.path.exists(folder_name):
+        os.makedirs(folder_name)
     train_csv = "data/dataset/train_annotation_tiny.csv"
     validation_csv = "data/dataset/validation_annotation_tiny.csv"
     learning_rate_range = [0.003, 0.003]

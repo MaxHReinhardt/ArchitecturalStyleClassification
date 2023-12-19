@@ -111,24 +111,25 @@ Next steps:
 
 
 ## Running the scripts
-Follow these steps to run the tests (locally):
+Follow these steps to prepare the data:
 1. Clone the repository
-2. Download the dataset with the following link and place it in the repository 
-(https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset)
-3. Run src/data_management.py to split the dataset and create annotation files
-4. Install the requirements from requirements.txt
-5. Run the tests in tests/tests.py (depending on local configurations, one has to adjust the file paths)
+2. Download the dataset with the following link (https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset)
+3. Create a folder "data" within the repository and move the unpacked downloaded dataset directory into that folder
+4. Run src/data_management.py to split the dataset and create annotation files
+
+Follow these steps to run the tests (locally):
+1. For efficient testing, it is recommended to create two files "data/dataset/train_annotation_tiny.csv" and 
+"data/dataset/train_annotation_tiny.csv" by duplicating the corresponding annotation files and deleting most rows, such 
+that tests can be performed on small example datasets
+2. Install the requirements from requirements.txt
+3. Run the tests in tests/tests.py (depending on local configurations, one has to adjust the file paths)
 
 Follow these steps to explore different model and training configurations (in colab):
-1. Clone the repository locally
-2. Download the dataset with the following link and place it in the repository 
-(https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset)
-3. Run src/data_management.py to split the dataset and create annotation files
-4. Place the split dataset in Google Drive
-5. Open colab_execution/experiment_compare_model_hyperparameters.ipynb or 
+1. Zip the data folder and upload it to Google Drive
+2. Open colab_execution/experiment_compare_model_hyperparameters.ipynb or 
 colab_execution/experiment_compare_training_hyperparameters.ipynb from GitHub in Colab
-6. Optionally, define configurations as wished 
-7. Run the cells
+3. Optionally, define configurations as wished 
+4. Run the cells
 
 
 ## References

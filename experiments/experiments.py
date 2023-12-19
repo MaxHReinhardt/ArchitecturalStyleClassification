@@ -68,8 +68,8 @@ def compare_training_hyperparameter_configurations(learning_rate_range, batch_si
     weight_decay = 0
     max_num_epochs = 100
 
-    resolution = 160 # for testing purposes
-    width_multiplier = 1
+    resolution = 80  # for testing purposes
+    width_multiplier = 0.5  # for testing purposes
     cbam_last_layer = False
     cbam_all_layers = True
 

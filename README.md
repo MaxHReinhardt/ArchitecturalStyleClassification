@@ -111,9 +111,6 @@ Next steps:
 
 
 ## Running the scripts
-@Pacha: If you want to run the scripts, you can omit splitting the datasets by directly using the split dataset I sent 
-you the link to by email. 
-
 Follow these steps to run the tests (locally):
 1. Clone the repository
 2. Download the dataset with the following link and place it in the repository 
@@ -122,7 +119,7 @@ Follow these steps to run the tests (locally):
 4. Install the requirements from requirements.txt
 5. Run the tests in tests/tests.py (depending on local configurations, one has to adjust the file paths)
 
-Follow these steps if you want to explore different model and training configurations (in colab):
+Follow these steps to explore different model and training configurations (in colab):
 1. Clone the repository locally
 2. Download the dataset with the following link and place it in the repository 
 (https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset)

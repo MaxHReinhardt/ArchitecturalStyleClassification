@@ -111,6 +111,8 @@ Next steps:
 
 
 ## Running the scripts
+Requirements: Python 3.9 and packages as specified in requirements.txt.
+
 Follow these steps to prepare the data:
 1. Clone the repository
 2. Download the dataset with the following link (https://www.kaggle.com/datasets/dumitrux/architectural-styles-dataset)
@@ -119,10 +121,9 @@ Follow these steps to prepare the data:
 
 After preparing the data, follow these steps to run the tests (locally):
 1. For efficient testing, it is recommended to create two files "data/dataset/train_annotation_tiny.csv" and 
-"data/dataset/validation_annotation_tiny.csv" by duplicating the corresponding annotation files and deleting most rows, such 
-that tests can be performed on small example datasets
-2. Install the requirements from requirements.txt
-3. Run the tests in tests/tests.py (depending on local configurations, one has to adjust the file paths)
+"data/dataset/validation_annotation_tiny.csv" by duplicating the corresponding annotation files and deleting most rows, 
+such that tests can be performed on small example datasets
+2. Run the tests in tests/tests.py (to shorten runtimes, resolutions/widths/batch sizes can be decreased)
 
 After preparing the data, follow these steps to explore different model and training configurations (in colab):
 1. Zip the data folder and upload it to Google Drive

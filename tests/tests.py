@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 import os
 
-from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetDynamicNormalization
+from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetStaticNormalization
 from src.model import MobileNetV1
 from src.train_model import train_with_early_stopping
 from src.evaluate_model import evaluate
@@ -19,9 +19,10 @@ def test_preprocessing():
     train_csv = 'data/dataset/train_annotation.csv'
     validation_csv = 'data/dataset/validation_annotation.csv'
 
-    train_set_dynamic_norm = TrainSetDynamicNormalization(resolution, train_csv)
-    validation_set_dynamic_norm = EvaluationSetDynamicNormalization(resolution, validation_csv)
-    datasets = [train_set_dynamic_norm, validation_set_dynamic_norm]
+    train_set = TrainSetDynamicNormalization(resolution, train_csv)
+    normalization_mean, normalization_std = train_set.get_normalization_parameters()
+    validation_set = EvaluationSetStaticNormalization(resolution, validation_csv, normalization_mean, normalization_std)
+    datasets = [train_set, validation_set]
 
     # Test Shapes
     for dataset in datasets:
@@ -29,29 +30,30 @@ def test_preprocessing():
             assert data.shape[1:] == (3, 128, 128)  # Expected shape (channels, height, width)
             break  # Checking only the first batch
 
-    # Check if normalization transform exists
+    # Check if normalization transforms exist
     assert any(isinstance(transform, v2.Normalize) for transform
-               in train_set_dynamic_norm.train_transforms.transforms)
+               in train_set.train_transforms.transforms)
     assert any(isinstance(transform, v2.Normalize) for transform
-               in validation_set_dynamic_norm.evaluation_transforms.transforms)
+               in validation_set.evaluation_transforms.transforms)
 
-    # Test normalization: check if mean is approximately 0 and std is approximately 1
-    for dataset in datasets:
-        data_loader = DataLoader(dataset.get_data(), batch_size=32)
+    # Test normalization: check if mean is approximately 0 and std is approximately 1 for test set
+    data_loader = DataLoader(train_set.get_data(), batch_size=32)
 
-        channels_sum = torch.zeros(3)
-        channels_squared_sum = torch.zeros(3)
-        num_batches = 0
+    channels_sum = torch.zeros(3)
+    channels_squared_sum = torch.zeros(3)
+    num_batches = 0
+    for data, _ in data_loader:
+        channels_sum += torch.mean(data, dim=[0, 2, 3])
+        channels_squared_sum += torch.mean(data ** 2, dim=[0, 2, 3])
+        num_batches += 1
+    mean = channels_sum / num_batches
+    std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
 
-        for data, _ in data_loader:
-            channels_sum += torch.mean(data, dim=[0, 2, 3])
-            channels_squared_sum += torch.mean(data ** 2, dim=[0, 2, 3])
-            num_batches += 1
+    assert torch.allclose(mean, torch.zeros_like(mean), atol=1e-2)
+    assert torch.allclose(std, torch.ones_like(std), atol=1e-2)
 
-        mean = channels_sum / num_batches
-        std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
-        assert torch.allclose(mean, torch.zeros_like(mean), atol=1e-2)
-        assert torch.allclose(std, torch.ones_like(std), atol=1e-2)
+    # Test normalization: check if normalization parameters of train and validation set are equal
+    assert train_set.get_normalization_parameters() == validation_set.get_normalization_parameters()
 
 
 def test_training_with_early_stopping_and_evaluation():
@@ -74,10 +76,15 @@ def test_training_with_early_stopping_and_evaluation():
     print(f"Device: {device}")
 
     # tiny datasets only for testing purposes
-    train_set = TrainSetDynamicNormalization(resolution=resolution,
-                                             train_csv="data/dataset/train_annotation_tiny.csv").get_data()
-    validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
-                                                       evaluation_csv="data/dataset/train_annotation_tiny.csv").get_data()
+
+    train_set_object = TrainSetDynamicNormalization(resolution=resolution,
+                                                    train_csv="data/dataset/train_annotation_tiny.csv")
+    train_set = train_set_object.get_data()
+    normalization_mean, normalization_std = train_set_object.get_normalization_parameters()
+    validation_set = EvaluationSetStaticNormalization(resolution=resolution,
+                                                      evaluation_csv="data/dataset/train_annotation_tiny.csv",
+                                                      normalization_mean=normalization_mean,
+                                                      normalization_std=normalization_std).get_data()
 
     model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                         cbam_last_layer=cbam_last_layer, cbam_all_layers=cbam_all_layers)

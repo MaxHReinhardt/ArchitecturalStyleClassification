@@ -3,7 +3,7 @@ import os
 import numpy as np
 import itertools
 
-from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetDynamicNormalization
+from src.preprocessing import TrainSetDynamicNormalization, EvaluationSetStaticNormalization
 from src.model import MobileNetV1
 from src.train_model import train_with_early_stopping
 from src.evaluate_model import evaluate
@@ -28,10 +28,14 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
                                                                                             resolution_list,
                                                                                             cbam_last_layer_variant_list,
                                                                                             cbam_all_layers_variant_list):
-        train_set = TrainSetDynamicNormalization(resolution=resolution,
-                                                 train_csv=train_csv).get_data()
-        validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
-                                                           evaluation_csv=validation_csv).get_data()
+        train_set_object = TrainSetDynamicNormalization(resolution=resolution,
+                                                        train_csv=train_csv)
+        train_set = train_set_object.get_data()
+        normalization_mean, normalization_std = train_set_object.get_normalization_parameters()
+        validation_set = EvaluationSetStaticNormalization(resolution=resolution,
+                                                          evaluation_csv=validation_csv,
+                                                          normalization_mean=normalization_mean,
+                                                          normalization_std=normalization_std).get_data()
 
         model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                             cbam_all_layers=cbam_all_layers, cbam_last_layer=cbam_last_layer)
@@ -60,7 +64,8 @@ def compare_model_hyperparameter_configurations(width_multiplier_list, resolutio
               f"Average prediction time (seconds): {avg_prediction_time}")
 
 
-def compare_training_hyperparameter_configurations(learning_rate_range, batch_size_range, num_configurations, train_csv, validation_csv):
+def compare_training_hyperparameter_configurations(learning_rate_range, batch_size_range, num_configurations, train_csv,
+                                                   validation_csv):
     """
     Performs random search for given ranges of training hyperparameters.
     """
@@ -79,14 +84,19 @@ def compare_training_hyperparameter_configurations(learning_rate_range, batch_si
 
     for _ in range(num_configurations):
         # Randomly select learning rate and batch size from the provided ranges
-        learning_rate = np.power(10, np.random.uniform(np.log10(learning_rate_range[0]), np.log10(learning_rate_range[1])))
+        learning_rate = np.power(10,
+                                 np.random.uniform(np.log10(learning_rate_range[0]), np.log10(learning_rate_range[1])))
         batch_size = int(np.power(2, np.random.uniform(np.log2(batch_size_range[0]), np.log2(batch_size_range[1]))))
         print(f"Learning rate: {learning_rate}, batch size: {batch_size}.")
 
-        train_set = TrainSetDynamicNormalization(resolution=resolution,
-                                                 train_csv=train_csv).get_data()
-        validation_set = EvaluationSetDynamicNormalization(resolution=resolution,
-                                                           evaluation_csv=validation_csv).get_data()
+        train_set_object = TrainSetDynamicNormalization(resolution=resolution,
+                                                        train_csv=train_csv)
+        train_set = train_set_object.get_data()
+        normalization_mean, normalization_std = train_set_object.get_normalization_parameters()
+        validation_set = EvaluationSetStaticNormalization(resolution=resolution,
+                                                          evaluation_csv=validation_csv,
+                                                          normalization_mean=normalization_mean,
+                                                          normalization_std=normalization_std).get_data()
 
         model = MobileNetV1(ch_in=3, n_classes=25, width_multiplier=width_multiplier,
                             cbam_all_layers=cbam_all_layers, cbam_last_layer=cbam_last_layer)

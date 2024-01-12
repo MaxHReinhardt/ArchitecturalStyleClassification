@@ -91,58 +91,11 @@ class TrainSetDynamicNormalization:
     def get_transforms(self):
         return self.train_transforms
 
+    def get_normalization_parameters(self):
+        return self.mean, self.std
+
     def get_data(self):
         return self.train_set
-
-
-class EvaluationSetDynamicNormalization:
-    """
-    Evaluation set class that applies transforms similar to the train transforms but omits data augmentation.
-    """
-
-    def __init__(self, resolution, evaluation_csv):
-        self.evaluation_transforms = v2.Compose([
-            v2.ToImage(),
-            v2.ToDtype(torch.uint8, scale=True),
-            v2.Resize(size=(resolution, resolution), antialias=True),
-
-            v2.ToDtype(torch.float32, scale=True),
-        ])
-
-        self.evaluation_set = ArchitecturalStylesDataset(
-            csv_file=evaluation_csv,
-            transform=self.evaluation_transforms,
-        )
-
-        # Calculate mean and standard deviation for dynamic normalization
-        self.mean, self.std = self.calculate_normalization_values()
-        self.evaluation_transforms.transforms.append(v2.Normalize(mean=self.mean, std=self.std)) # evaluation_transforms.transforms is a list
-
-    def calculate_normalization_values(self):
-        data_loader = DataLoader(
-            self.evaluation_set,
-            batch_size=32,
-            shuffle=False
-        )
-
-        channels_sum = torch.zeros(3)
-        channels_squared_sum = torch.zeros(3)
-        num_batches = 0
-
-        for data, _ in data_loader:
-            channels_sum += torch.mean(data, dim=[0, 2, 3])
-            channels_squared_sum += torch.mean(data ** 2, dim=[0, 2, 3])
-            num_batches += 1
-
-        mean = channels_sum / num_batches
-        std = (channels_squared_sum / num_batches - mean ** 2) ** 0.5
-        return mean.tolist(), std.tolist()
-
-    def get_transforms(self):
-        return self.evaluation_transforms
-
-    def get_data(self):
-        return self.evaluation_set
 
 
 class TrainSetStaticNormalization:
@@ -150,7 +103,10 @@ class TrainSetStaticNormalization:
     Old train set class without dynamic normalization.
     """
 
-    def __init__(self, resolution, train_csv):
+    def __init__(self, resolution, train_csv, normalization_mean, normalization_std):
+        self.normalization_mean = normalization_mean
+        self.normalization_std = normalization_std
+
         self.train_transforms = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.uint8, scale=True),
@@ -161,7 +117,7 @@ class TrainSetStaticNormalization:
             v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=None),
 
             v2.ToDtype(torch.float32, scale=True),
-            v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            v2.Normalize(mean=self.normalization_mean, std=self.normalization_std)
         ])
 
         self.train_set = ArchitecturalStylesDataset(
@@ -172,23 +128,29 @@ class TrainSetStaticNormalization:
     def get_transforms(self):
         return self.train_transforms
 
+    def get_normalization_parameters(self):
+        return self.normalization_mean, self.normalization_std
+
     def get_data(self):
         return self.train_set
 
 
 class EvaluationSetStaticNormalization:
     """
-    Old evaluation set class without dynamic normalization.
+    Evaluation set class that applies transforms similar to the train transforms but omits data augmentation.
     """
 
-    def __init__(self, resolution, evaluation_csv):
+    def __init__(self, resolution, evaluation_csv, normalization_mean, normalization_std):
+        self.normalization_mean = normalization_mean
+        self.normalization_std = normalization_std
+
         self.evaluation_transforms = v2.Compose([
             v2.ToImage(),
             v2.ToDtype(torch.uint8, scale=True),
             v2.Resize(size=(resolution, resolution), antialias=True),
 
             v2.ToDtype(torch.float32, scale=True),
-            v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            v2.Normalize(mean=self.normalization_mean, std=self.normalization_std)
         ])
 
         self.evaluation_set = ArchitecturalStylesDataset(
@@ -198,6 +160,9 @@ class EvaluationSetStaticNormalization:
 
     def get_transforms(self):
         return self.evaluation_transforms
+
+    def get_normalization_parameters(self):
+        return self.normalization_mean, self.normalization_std
 
     def get_data(self):
         return self.evaluation_set

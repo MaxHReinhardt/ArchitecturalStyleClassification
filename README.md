@@ -85,8 +85,8 @@ resolution of 384x384 and a width of 100%. The training was performed with a lea
 and without weight decay. On the validation set, the model achieved an accuracy of 58.6%. 
 
 To determine the model's performance on unseen data, it was further evaluated on the test set (see 
-/experiments/results.ipynb). Thereby, it achieved an accuracy of 57.1%. The average inference speed for one batch of 64
-images was 7.8 seconds on a laptop CPU.
+/experiments/results.ipynb). Thereby, it achieved an accuracy of 58.0%. The average inference speed for one batch of 64
+images was 5.8 seconds on a laptop CPU.
 
 ### Work-Breakdown
 In the following, the time needed for the single development steps are reported. The task structure follows the work-

@@ -5,6 +5,8 @@ is conducted as part of the course Applied Deep Learning at TU Wien. The approac
 with a channel-spatial attention mechanism. A detailed project description can be found in the document 
 Assignment_1.pdf that contains a proposal for the project.
 
+The developed model can be used via a Streamlit app: https://architecturalstyleclassification-ecqzmfyac9ucp5f9pvahxu.streamlit.app/
+
 
 ## Summary of Model Development (Assignment 2)
 A model was developed based on the approach proposed in Assignment 1 (see Assignment_1.pdf). The following sections 
